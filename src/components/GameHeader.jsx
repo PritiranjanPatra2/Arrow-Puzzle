@@ -1,6 +1,7 @@
 import React from 'react';
-import { ArrowLeft, Pause, Star } from 'lucide-react';
+import { ArrowLeft, Pause, Star, Heart, Award } from 'lucide-react';
 import { formatTime } from '../utils/scoring.js';
+import { MAX_LIFELINES } from '../hooks/useGame.js';
 
 export function GameHeader({
   level,
@@ -8,17 +9,20 @@ export function GameHeader({
   remainingCount,
   moves,
   timeSeconds,
+  lifelines = 5,
+  lostHeartIndex = null,
+  score = 0,
   bestStars = 0,
   onBack,
   onPause
 }) {
-  // Difficulty label based on level tier
   let tierLabel = 'Novice';
-  if (level >= 90) tierLabel = 'Master';
-  else if (level >= 75) tierLabel = 'Extreme';
-  else if (level >= 50) tierLabel = 'Expert';
-  else if (level >= 25) tierLabel = 'Advanced';
-  else if (level >= 10) tierLabel = 'Challenger';
+  if (level >= 900) tierLabel = 'Supreme';
+  else if (level >= 750) tierLabel = 'Extreme';
+  else if (level >= 500) tierLabel = 'Master';
+  else if (level >= 250) tierLabel = 'Expert';
+  else if (level >= 100) tierLabel = 'Advanced';
+  else if (level >= 25) tierLabel = 'Challenger';
 
   return (
     <header className="game-header">
@@ -49,16 +53,48 @@ export function GameHeader({
         </button>
       </div>
 
+      {/* Lifelines and Score Banner Row */}
+      <div className="lifelines-score-banner">
+        {/* 5 Lifelines (Hearts) */}
+        <div className="lifelines-group" title={`${lifelines}/5 Lifelines remaining`}>
+          <span className="lifeline-label">LIFELINES</span>
+          <div className="hearts-row">
+            {Array.from({ length: MAX_LIFELINES }).map((_, idx) => {
+              const isAlive = idx < lifelines;
+              const isBreaking = idx === lostHeartIndex;
+
+              return (
+                <div
+                  key={idx}
+                  className={`heart-wrapper ${isAlive ? 'heart-alive' : 'heart-empty'} ${
+                    isBreaking ? 'heart-breaking' : ''
+                  }`}
+                >
+                  <Heart size={18} fill={isAlive ? '#F43F5E' : 'transparent'} />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Live Score Counter */}
+        <div className="header-score-pill">
+          <Award size={16} className="text-amber" />
+          <span className="score-num">{score}</span>
+          <span className="score-unit">PTS</span>
+        </div>
+      </div>
+
       {/* Stats HUD Bar */}
       <div className="stats-hud">
-        {/* Stars */}
+        {/* Rating Stars */}
         <div className="stat-card">
           <span className="stat-label">RATING</span>
           <div className="stars-row">
             {[1, 2, 3].map(s => (
               <Star
                 key={s}
-                size={16}
+                size={14}
                 className={s <= bestStars ? 'star-filled' : 'star-empty'}
               />
             ))}

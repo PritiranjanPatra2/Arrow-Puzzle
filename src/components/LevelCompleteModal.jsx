@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import confetti from 'canvas-confetti';
-import { Star, ArrowRight, RefreshCw, Grid } from 'lucide-react';
+import { Star, ArrowRight, RefreshCw, Grid, Heart, Award, Zap } from 'lucide-react';
 import { formatTime } from '../utils/scoring.js';
 
 export function LevelCompleteModal({
@@ -8,13 +8,14 @@ export function LevelCompleteModal({
   stars,
   moves,
   timeSeconds,
+  pointsBreakdown,
+  lifelinesRemaining,
   onNextLevel,
   onReplay,
   onLevelSelect,
   hasNextLevel
 }) {
   useEffect(() => {
-    // Satisfying celebratory confetti burst
     try {
       confetti({
         particleCount: 80,
@@ -22,9 +23,7 @@ export function LevelCompleteModal({
         origin: { y: 0.6 },
         colors: ['#38BDF8', '#818CF8', '#F59E0B', '#10B981', '#EC4899']
       });
-    } catch (e) {
-      // safe fallback
-    }
+    } catch (e) {}
   }, []);
 
   return (
@@ -43,10 +42,49 @@ export function LevelCompleteModal({
                 s <= stars ? 'star-earned' : 'star-missed'
               }`}
             >
-              <Star size={36} />
+              <Star size={34} />
             </div>
           ))}
         </div>
+
+        {/* Points Earned Card */}
+        {pointsBreakdown && (
+          <div className="points-earned-card">
+            <div className="points-main-header">
+              <span className="points-total-label">POINTS EARNED</span>
+              <span className="points-total-val">+{pointsBreakdown.totalPoints} PTS</span>
+            </div>
+
+            <div className="points-breakdown-list">
+              <div className="points-row">
+                <span className="points-item-name">
+                  <Award size={13} className="text-cyan" /> Base Clear
+                </span>
+                <span className="points-item-val">+{pointsBreakdown.basePoints}</span>
+              </div>
+              <div className="points-row">
+                <span className="points-item-name">
+                  <Star size={13} className="text-amber" /> Stars Bonus
+                </span>
+                <span className="points-item-val">+{pointsBreakdown.starBonus}</span>
+              </div>
+              <div className="points-row">
+                <span className="points-item-name">
+                  <Heart size={13} className="text-rose" /> {lifelinesRemaining}/5 Lifelines
+                </span>
+                <span className="points-item-val">+{pointsBreakdown.lifelineBonus}</span>
+              </div>
+              {pointsBreakdown.speedBonus > 0 && (
+                <div className="points-row">
+                  <span className="points-item-name">
+                    <Zap size={13} className="text-amber" /> Speed Bonus
+                  </span>
+                  <span className="points-item-val">+{pointsBreakdown.speedBonus}</span>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Stats summary */}
         <div className="victory-stats-grid">
@@ -76,7 +114,7 @@ export function LevelCompleteModal({
             </button>
           ) : (
             <button className="primary-btn pulse-glow" onClick={onNextLevel}>
-              <span>View All Complete</span>
+              <span>View Supreme Victory</span>
             </button>
           )}
 

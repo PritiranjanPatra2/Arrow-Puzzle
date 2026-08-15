@@ -1,16 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../hooks/useGame.js';
 import { useTimer } from '../hooks/useTimer.js';
-import { calculateStars } from '../utils/scoring.js';
+import { calculateStars, calculateLevelPoints } from '../utils/scoring.js';
 import { GameHeader } from './GameHeader.jsx';
 import { GameBoard } from './GameBoard.jsx';
 import { GameControls } from './GameControls.jsx';
 import { PauseModal } from './PauseModal.jsx';
+import { GameOverModal } from './GameOverModal.jsx';
 import { LevelCompleteModal } from './LevelCompleteModal.jsx';
 import { AllCompleteModal } from './AllCompleteModal.jsx';
 
 export function GameScreen({
   level,
+  score = 0,
   bestStarsForLevel = 0,
   onCompleteLevelSave,
   onBackToMenu,
@@ -19,6 +21,7 @@ export function GameScreen({
   const timer = useTimer(true);
   const [isPaused, setIsPaused] = useState(false);
   const [earnedStars, setEarnedStars] = useState(3);
+  const [pointsBreakdown, setPointsBreakdown] = useState(null);
 
   const {
     currentLevel,
@@ -27,6 +30,8 @@ export function GameScreen({
     arrows,
     initialArrowCount,
     remainingCount,
+    lifelines,
+    lostHeartIndex,
     moves,
     historyLength,
     animatingArrow,
@@ -35,6 +40,7 @@ export function GameScreen({
     hintInfo,
     isLevelComplete,
     isAllComplete,
+    isGameOver,
     handleArrowClick,
     undo,
     requestHint,
@@ -48,7 +54,7 @@ export function GameScreen({
     timer.reset();
   }, [level, loadLevel]);
 
-  // When level completes, pause timer and compute stars
+  // When level completes, pause timer, calculate stars & points breakdown
   useEffect(() => {
     if (isLevelComplete) {
       timer.stop();
@@ -58,10 +64,25 @@ export function GameScreen({
         timer.seconds,
         levelData.difficulty.parTimeSeconds
       );
+      const points = calculateLevelPoints(
+        currentLevel,
+        stars,
+        lifelines,
+        timer.seconds,
+        levelData.difficulty.parTimeSeconds
+      );
       setEarnedStars(stars);
-      onCompleteLevelSave(currentLevel, stars, moves, timer.seconds);
+      setPointsBreakdown(points);
+      onCompleteLevelSave(currentLevel, stars, moves, timer.seconds, lifelines, points.totalPoints);
     }
-  }, [isLevelComplete, moves, initialArrowCount, timer.seconds, levelData.difficulty.parTimeSeconds, currentLevel, onCompleteLevelSave]);
+  }, [isLevelComplete, moves, initialArrowCount, lifelines, timer.seconds, levelData.difficulty.parTimeSeconds, currentLevel, onCompleteLevelSave]);
+
+  // Stop timer on game over
+  useEffect(() => {
+    if (isGameOver) {
+      timer.stop();
+    }
+  }, [isGameOver, timer]);
 
   const handlePause = () => {
     timer.pause();
@@ -94,6 +115,9 @@ export function GameScreen({
         remainingCount={remainingCount}
         moves={moves}
         timeSeconds={timer.seconds}
+        lifelines={lifelines}
+        lostHeartIndex={lostHeartIndex}
+        score={score}
         bestStars={bestStarsForLevel}
         onBack={onBackToMenu}
         onPause={handlePause}
@@ -116,7 +140,7 @@ export function GameScreen({
         onUndo={undo}
         onHint={requestHint}
         onRestart={handleRestart}
-        disabled={isLevelComplete || isPaused}
+        disabled={isLevelComplete || isGameOver || isPaused}
       />
 
       {/* Pause Modal */}
@@ -128,6 +152,15 @@ export function GameScreen({
         />
       )}
 
+      {/* Game Over (0 lifelines) Modal */}
+      {isGameOver && (
+        <GameOverModal
+          level={currentLevel}
+          onRestart={handleRestart}
+          onExit={onBackToMenu}
+        />
+      )}
+
       {/* Standard Level Complete Modal */}
       {isLevelComplete && !isAllComplete && (
         <LevelCompleteModal
@@ -135,6 +168,8 @@ export function GameScreen({
           stars={earnedStars}
           moves={moves}
           timeSeconds={timer.seconds}
+          pointsBreakdown={pointsBreakdown}
+          lifelinesRemaining={lifelines}
           onNextLevel={handleNextLevel}
           onReplay={handleRestart}
           onLevelSelect={onBackToMenu}

@@ -1,13 +1,17 @@
 import React from 'react';
-import { Play, Grid, HelpCircle, Settings, Star, Trophy } from 'lucide-react';
+import { Play, Grid, HelpCircle, Settings, Star, Trophy, Award } from 'lucide-react';
 import { sounds } from '../audio/soundEffects.js';
+import { ACHIEVEMENTS } from '../utils/achievements.js';
 
 export function Home({
   highestUnlockedLevel,
   completedCount,
   totalStars,
+  score = 0,
+  unlockedAchievementsCount = 0,
   onPlay,
   onLevelSelect,
+  onAchievements,
   onHowToPlay,
   onSettings
 }) {
@@ -71,6 +75,20 @@ export function Home({
             <span>LEVEL SELECT</span>
           </button>
 
+          <button
+            className="home-menu-btn highlight-gold-btn"
+            onClick={() => {
+              sounds.playClick();
+              onAchievements();
+            }}
+          >
+            <Trophy size={20} className="text-amber" />
+            <span>ACHIEVEMENTS</span>
+            <span className="badge-pill gold-badge">
+              {unlockedAchievementsCount}/{ACHIEVEMENTS.length}
+            </span>
+          </button>
+
           <div className="home-sub-menu-row">
             <button
               className="home-menu-btn flex-1"
@@ -96,19 +114,25 @@ export function Home({
           </div>
         </div>
 
-        {/* Progress Card */}
+        {/* Progress Card with Score */}
         <div className="home-progress-card">
           <div className="progress-top-row">
+            <div className="progress-stat">
+              <span className="progress-stat-label">TOTAL SCORE</span>
+              <span className="progress-stat-val text-amber">
+                <Award size={16} className="inline-icon" /> {score} PTS
+              </span>
+            </div>
+            <div className="progress-stat">
+              <span className="progress-stat-label">STARS</span>
+              <span className="progress-stat-val">
+                <Star size={16} fill="#F59E0B" className="inline-icon text-amber" /> {totalStars}
+              </span>
+            </div>
             <div className="progress-stat">
               <span className="progress-stat-label">COMPLETED</span>
               <span className="progress-stat-val">
                 {completedCount} <small>/ 1,000</small>
-              </span>
-            </div>
-            <div className="progress-stat">
-              <span className="progress-stat-label">TOTAL STARS</span>
-              <span className="progress-stat-val text-amber">
-                <Star size={16} fill="#F59E0B" className="inline-icon" /> {totalStars}
               </span>
             </div>
           </div>

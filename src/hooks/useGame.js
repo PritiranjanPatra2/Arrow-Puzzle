@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { getLevelData } from '../game/predefinedLevels.js';
-import { checkArrowEscape, getBestHint, getAvailableMoves } from '../game/puzzleValidator.js';
+import { checkArrowEscape, getBestHint } from '../game/puzzleValidator.js';
 import { sounds } from '../audio/soundEffects.js';
+
+export const MAX_LIFELINES = 5;
 
 export function useGame(initialLevel = 1, onLevelCompleted = null, onAllCompleted = null) {
   const [currentLevel, setCurrentLevel] = useState(initialLevel);
@@ -9,15 +11,20 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
   const [arrows, setArrows] = useState(() => getLevelData(initialLevel).arrows.map(a => ({ ...a })));
   const [initialArrowCount, setInitialArrowCount] = useState(() => getLevelData(initialLevel).arrows.length);
   
+  // Lifelines state (5 hearts)
+  const [lifelines, setLifelines] = useState(MAX_LIFELINES);
+  const [lostHeartIndex, setLostHeartIndex] = useState(null); // for crack/break animation
+  
   // Animation and interaction states
-  const [animatingArrow, setAnimatingArrow] = useState(null); // { arrow, direction, exitDistance }
+  const [animatingArrow, setAnimatingArrow] = useState(null);
   const [blockedArrowId, setBlockedArrowId] = useState(null);
   const [highlightedBlockerIds, setHighlightedBlockerIds] = useState([]);
-  const [hintInfo, setHintInfo] = useState(null); // { arrowId, rayCells }
+  const [hintInfo, setHintInfo] = useState(null);
   const [moves, setMoves] = useState(0);
-  const [history, setHistory] = useState([]); // Stack of previous arrow arrays
+  const [history, setHistory] = useState([]); // Stack of previous board snapshots
   const [isLevelComplete, setIsLevelComplete] = useState(false);
   const [isAllComplete, setIsAllComplete] = useState(false);
+  const [isGameOver, setIsGameOver] = useState(false);
 
   const blockedTimeoutRef = useRef(null);
   const hintTimeoutRef = useRef(null);
@@ -35,6 +42,8 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     setLevelData(data);
     setArrows(data.arrows.map(a => ({ ...a })));
     setInitialArrowCount(data.arrows.length);
+    setLifelines(MAX_LIFELINES);
+    setLostHeartIndex(null);
     setMoves(0);
     setHistory([]);
     setAnimatingArrow(null);
@@ -43,16 +52,16 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     setHintInfo(null);
     setIsLevelComplete(false);
     setIsAllComplete(false);
+    setIsGameOver(false);
   }, []);
 
   // Handle arrow click
   const handleArrowClick = useCallback((arrowId) => {
-    if (isLevelComplete || animatingArrow) return;
+    if (isLevelComplete || isGameOver || animatingArrow) return;
 
     const arrow = arrows.find(a => a.id === arrowId);
     if (!arrow) return;
 
-    // Clear any active hint or blocker highlights
     setHintInfo(null);
 
     const escapeInfo = checkArrowEscape(arrow, arrows, levelData.boardSize);
@@ -62,10 +71,10 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
       sounds.playEscape(1 + Math.min(1.2, (initialArrowCount - arrows.length) * 0.05));
       
       // Save current state for Undo
-      setHistory(prev => [...prev, arrows.map(a => ({ ...a }))]);
+      setHistory(prev => [...prev, { arrows: arrows.map(a => ({ ...a })), lifelines }]);
       setMoves(m => m + 1);
 
-      // Start flight escape animation
+      // Flight escape animation
       setAnimatingArrow(arrow);
 
       escapeTimeoutRef.current = setTimeout(() => {
@@ -77,22 +86,35 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
             if (currentLevel === 1000) {
               setIsAllComplete(true);
               sounds.playAllComplete();
-              if (onAllCompleted) onAllCompleted(currentLevel, moves + 1);
+              if (onAllCompleted) onAllCompleted(currentLevel, moves + 1, lifelines);
             } else {
               sounds.playLevelComplete();
-              if (onLevelCompleted) onLevelCompleted(currentLevel, moves + 1);
+              if (onLevelCompleted) onLevelCompleted(currentLevel, moves + 1, lifelines);
             }
           }
           return next;
         });
         setAnimatingArrow(null);
-      }, 260); // 260ms smooth escape animation
+      }, 260);
 
     } else {
-      // 2. Blocked -> Shake & highlight blockers
-      sounds.playBlocked();
+      // 2. Blocked Arrow -> Lose a Lifeline / Heart!
+      sounds.playHeartLost();
       setBlockedArrowId(arrowId);
       setHighlightedBlockerIds(escapeInfo.blockers.map(b => b.id));
+
+      setLifelines(prev => {
+        const next = Math.max(0, prev - 1);
+        setLostHeartIndex(prev - 1);
+        setTimeout(() => setLostHeartIndex(null), 600);
+
+        if (next === 0) {
+          // Out of lifelines -> Game Over!
+          setIsGameOver(true);
+          sounds.playGameOver();
+        }
+        return next;
+      });
 
       clearTimeout(blockedTimeoutRef.current);
       blockedTimeoutRef.current = setTimeout(() => {
@@ -100,27 +122,27 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
         setHighlightedBlockerIds([]);
       }, 500);
     }
-  }, [arrows, isLevelComplete, animatingArrow, levelData.boardSize, initialArrowCount, currentLevel, moves, onLevelCompleted, onAllCompleted]);
+  }, [arrows, isLevelComplete, isGameOver, animatingArrow, levelData.boardSize, initialArrowCount, lifelines, currentLevel, moves, onLevelCompleted, onAllCompleted]);
 
   // Undo move
   const undo = useCallback(() => {
-    if (history.length === 0 || isLevelComplete || animatingArrow) return;
+    if (history.length === 0 || isLevelComplete || isGameOver || animatingArrow) return;
 
     sounds.playUndo();
     const prevHistory = [...history];
-    const previousState = prevHistory.pop();
+    const previousSnapshot = prevHistory.pop();
     
     setHistory(prevHistory);
-    setArrows(previousState);
+    setArrows(previousSnapshot.arrows);
     setMoves(m => Math.max(0, m - 1));
     setHintInfo(null);
     setBlockedArrowId(null);
     setHighlightedBlockerIds([]);
-  }, [history, isLevelComplete, animatingArrow]);
+  }, [history, isLevelComplete, isGameOver, animatingArrow]);
 
   // Provide Hint
   const requestHint = useCallback(() => {
-    if (isLevelComplete || animatingArrow || arrows.length === 0) return;
+    if (isLevelComplete || isGameOver || animatingArrow || arrows.length === 0) return;
 
     const best = getBestHint(arrows, levelData.boardSize);
     if (!best) return;
@@ -135,7 +157,7 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     hintTimeoutRef.current = setTimeout(() => {
       setHintInfo(null);
     }, 2500);
-  }, [arrows, levelData.boardSize, isLevelComplete, animatingArrow]);
+  }, [arrows, levelData.boardSize, isLevelComplete, isGameOver, animatingArrow]);
 
   // Restart current level
   const restart = useCallback(() => {
@@ -144,6 +166,8 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     clearTimeout(escapeTimeoutRef.current);
 
     setArrows(levelData.arrows.map(a => ({ ...a })));
+    setLifelines(MAX_LIFELINES);
+    setLostHeartIndex(null);
     setMoves(0);
     setHistory([]);
     setAnimatingArrow(null);
@@ -152,6 +176,7 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     setHintInfo(null);
     setIsLevelComplete(false);
     setIsAllComplete(false);
+    setIsGameOver(false);
     sounds.playClick();
   }, [levelData]);
 
@@ -171,6 +196,8 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     arrows,
     initialArrowCount,
     remainingCount: arrows.length,
+    lifelines,
+    lostHeartIndex,
     moves,
     historyLength: history.length,
     animatingArrow,
@@ -179,6 +206,7 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     hintInfo,
     isLevelComplete,
     isAllComplete,
+    isGameOver,
     handleArrowClick,
     undo,
     requestHint,

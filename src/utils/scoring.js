@@ -1,12 +1,8 @@
 /**
- * Calculates 1, 2, or 3 star rating based on moves taken, initial arrow count, and time
+ * Calculates star rating and points for Arrow Puzzle
  */
-export function calculateStars(movesTaken, initialArrowCount, timeSeconds, parTimeSeconds) {
-  // Perfect moves: exactly initialArrowCount (each move escapes one arrow)
-  // 3 stars: Optimal moves (<= initialArrowCount + 2) and reasonable time
-  // 2 stars: Minor extra moves or slightly slow
-  // 1 star: Completed the level
 
+export function calculateStars(movesTaken, initialArrowCount, timeSeconds, parTimeSeconds) {
   const extraMoves = Math.max(0, movesTaken - initialArrowCount);
 
   if (extraMoves === 0 && timeSeconds <= parTimeSeconds * 1.3) {
@@ -22,6 +18,32 @@ export function calculateStars(movesTaken, initialArrowCount, timeSeconds, parTi
   }
 
   return 1;
+}
+
+export function calculateLevelPoints(level, stars, lifelinesRemaining, timeSeconds, parTimeSeconds) {
+  // Base points scaling with level
+  const basePoints = Math.round(50 + Math.min(250, level * 0.4));
+
+  // Star bonus
+  let starBonus = 10;
+  if (stars === 3) starBonus = 50;
+  else if (stars === 2) starBonus = 25;
+
+  // Lifelines bonus (+10 pts per intact heart, up to +50)
+  const lifelineBonus = Math.max(0, lifelinesRemaining) * 10;
+
+  // Speed bonus if solved faster than benchmark
+  const speedBonus = timeSeconds < parTimeSeconds ? Math.min(50, Math.round((parTimeSeconds - timeSeconds) * 1.5)) : 0;
+
+  const totalPoints = basePoints + starBonus + lifelineBonus + speedBonus;
+
+  return {
+    basePoints,
+    starBonus,
+    lifelineBonus,
+    speedBonus,
+    totalPoints
+  };
 }
 
 export function formatTime(totalSeconds) {
