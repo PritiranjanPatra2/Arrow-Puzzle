@@ -105,8 +105,31 @@ function generateDenseSnakeLabyrinth(boardSize, targetCount, rng, level) {
     return arr;
   }
 
-  const minLength = level <= 2 ? 2 : 2;
-  const maxLength = level <= 2 ? 3 : (level <= 10 ? 4 : (boardSize >= 9 ? 6 : 5));
+  let minLength = 2;
+  let maxLength = 3;
+
+  if (level === 1) {
+    minLength = 2;
+    maxLength = 3;
+  } else if (level <= 9) {
+    minLength = 2;
+    maxLength = 4;
+  } else if (level <= 19) {
+    minLength = 3;
+    maxLength = 6;
+  } else if (boardSize <= 14) {
+    // 12x12 - 14x14 boards: Big snakes 4 to 10 cells long!
+    minLength = 4;
+    maxLength = 10;
+  } else if (boardSize <= 22) {
+    // 16x16 - 22x22 boards: Giant snakes 5 to 16 cells long!
+    minLength = 5;
+    maxLength = 16;
+  } else {
+    // 25x25 - 35x35 boards: Epic Master snakes 6 to 24 cells long!
+    minLength = 6;
+    maxLength = 24;
+  }
 
   for (let k = 0; k < targetCount; k++) {
     const validHeadCandidates = [];
