@@ -21,8 +21,7 @@
   --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Perfectly balanced board sizing: fills screen beautifully with zero awkward black gaps */
-  --board-max-size: min(82vw, calc(100dvh - 290px), calc(100vh - 290px), 440px);
+  --board-max-size: min(84vw, calc(100dvh - 290px), calc(100vh - 290px), 440px);
 }
 
 * {
@@ -39,10 +38,16 @@ html, body {
   width: 100%;
   height: 100%;
   height: 100dvh;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
   position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   overscroll-behavior: none;
-  background-color: var(--bg-main);
+  background: #090D16;
   color: var(--text-primary);
   font-family: var(--font-main);
 }
@@ -51,10 +56,19 @@ html, body {
   width: 100%;
   height: 100%;
   height: 100dvh;
+  margin: 0;
+  padding: 0;
   display: flex;
   justify-content: center;
-  align-items: center;
+  align-items: stretch; /* Stretch to top flush, eliminate any top black bars */
+  overflow: hidden;
   overscroll-behavior: none;
+}
+
+@media (min-width: 640px) {
+  #root {
+    align-items: center;
+  }
 }
 
 button {
