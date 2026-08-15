@@ -580,7 +580,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 8px 12px max(14px, env(safe-area-inset-bottom)) 12px;
+  padding: 6px 12px max(24px, env(safe-area-inset-bottom, 24px)) 12px;
   box-sizing: border-box;
   z-index: 1;
   overflow: hidden;
@@ -590,7 +590,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;
 }
 
 .header-top-row {
@@ -934,9 +934,9 @@
   gap: 8px;
   justify-content: center;
   padding-top: 4px;
-  padding-bottom: 6px;
+  padding-bottom: 4px;
   margin-top: auto;
-  margin-bottom: 4px;
+  margin-bottom: 12px;
 }
 
 .control-btn {
@@ -983,52 +983,58 @@
 /* Compact Mobile Media Queries for Height Constraints */
 @media (max-height: 800px) {
   .game-screen-container {
-    padding: 6px 10px max(12px, env(safe-area-inset-bottom)) 10px;
+    padding: 4px 10px max(20px, env(safe-area-inset-bottom, 20px)) 10px;
   }
   .game-header {
-    gap: 4px;
+    gap: 3px;
   }
   .header-level-title {
-    font-size: 17px;
+    font-size: 16px;
   }
   .lifelines-score-banner {
-    padding: 4px 10px;
+    padding: 3px 8px;
   }
   .icon-btn {
-    width: 32px;
-    height: 32px;
+    width: 30px;
+    height: 30px;
   }
   .stats-hud {
-    gap: 4px;
+    gap: 3px;
   }
   .stat-card {
-    padding: 3px 2px;
+    padding: 2px 2px;
   }
   .stat-label {
-    font-size: 7.5px;
+    font-size: 7px;
   }
   .stat-value {
-    font-size: 12px;
+    font-size: 11px;
   }
   .control-btn {
     padding: 8px 6px;
     font-size: 12px;
   }
+  .game-controls {
+    margin-bottom: 10px;
+  }
 }
 
 @media (max-height: 650px) {
   .game-header {
-    gap: 3px;
+    gap: 2px;
   }
   .header-level-title {
-    font-size: 15px;
+    font-size: 14px;
   }
   .lifelines-score-banner {
-    padding: 2px 8px;
+    padding: 2px 6px;
   }
   .control-btn {
-    padding: 7px 4px;
+    padding: 6px 4px;
     font-size: 11px;
+  }
+  .game-controls {
+    margin-bottom: 8px;
   }
 }
 
