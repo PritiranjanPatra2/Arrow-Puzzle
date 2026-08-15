@@ -2,9 +2,12 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     <meta name="description" content="ARROW PUZZLE - Think. Tap. Escape. A 1000-level progressive logic puzzle game where you untangle complex arrow dependency networks." />
-    <meta name="theme-color" content="#090D16" />
+    <meta name="theme-color" content="#1e3a8a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <title>ARROW PUZZLE — Think. Tap. Escape.</title>
     
     <!-- Critical Preconnect & Font Display Swap for Sub-Second LCP -->
@@ -13,19 +16,32 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" />
     
     <style>
-      /* Critical instantaneous initial paint styling */
+      /* Zero-gap immersive fullscreen layout */
       html, body {
         margin: 0;
         padding: 0;
-        background: #090D16;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: radial-gradient(circle at 50% 0%, #1e3a8a 0%, #0f172a 60%, #090d16 100%);
         color: #F8FAFC;
         font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-        overflow-x: hidden;
+        overflow: hidden;
       }
       #root {
-        min-height: 100vh;
+        width: 100%;
+        height: 100%;
+        height: 100dvh;
+        margin: 0;
+        padding: 0;
         display: flex;
         flex-direction: column;
+        overflow: hidden;
       }
     </style>
   </head>

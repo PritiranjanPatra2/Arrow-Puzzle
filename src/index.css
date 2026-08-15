@@ -47,7 +47,7 @@ html, body {
   right: 0;
   bottom: 0;
   overscroll-behavior: none;
-  background: #090D16;
+  background: radial-gradient(circle at 50% 0%, #1e3a8a 0%, #0f172a 60%, #090d16 100%);
   color: var(--text-primary);
   font-family: var(--font-main);
 }
@@ -60,7 +60,7 @@ html, body {
   padding: 0;
   display: flex;
   justify-content: center;
-  align-items: stretch; /* Stretch to top flush, eliminate any top black bars */
+  align-items: stretch;
   overflow: hidden;
   overscroll-behavior: none;
 }
