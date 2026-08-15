@@ -21,8 +21,8 @@
   --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  /* Board dynamically adapts with generous clearance so bottom buttons are 100% lifted and clear */
-  --board-max-size: min(74vw, calc(100dvh - 360px), calc(100vh - 360px), 390px);
+  /* Perfectly balanced board sizing: fills screen beautifully with zero awkward black gaps */
+  --board-max-size: min(82vw, calc(100dvh - 290px), calc(100vh - 290px), 440px);
 }
 
 * {
