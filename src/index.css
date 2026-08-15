@@ -21,7 +21,8 @@
   --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 
-  --board-max-size: min(88vw, 540px);
+  /* Board dynamically adapts to both viewport width AND viewport height on mobile screens */
+  --board-max-size: min(88vw, calc(100dvh - 240px), calc(100vh - 240px), 480px);
 }
 
 * {
@@ -37,6 +38,7 @@
 html, body {
   width: 100%;
   height: 100%;
+  height: 100dvh;
   overflow: hidden;
   position: fixed;
   overscroll-behavior: none;
@@ -48,6 +50,7 @@ html, body {
 #root {
   width: 100%;
   height: 100%;
+  height: 100dvh;
   display: flex;
   justify-content: center;
   align-items: center;
