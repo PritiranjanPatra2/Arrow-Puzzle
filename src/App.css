@@ -580,7 +580,7 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 10px 12px max(8px, env(safe-area-inset-bottom)) 12px;
+  padding: 8px 12px max(14px, env(safe-area-inset-bottom)) 12px;
   box-sizing: border-box;
   z-index: 1;
   overflow: hidden;
@@ -590,7 +590,7 @@
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .header-top-row {
@@ -933,9 +933,10 @@
   display: flex;
   gap: 8px;
   justify-content: center;
-  padding-top: 6px;
-  padding-bottom: 2px;
+  padding-top: 4px;
+  padding-bottom: 6px;
   margin-top: auto;
+  margin-bottom: 4px;
 }
 
 .control-btn {
@@ -945,7 +946,7 @@
   justify-content: center;
   gap: 6px;
   padding: 10px 8px;
-  background: rgba(30, 41, 59, 0.8);
+  background: rgba(30, 41, 59, 0.85);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
@@ -980,12 +981,12 @@
 }
 
 /* Compact Mobile Media Queries for Height Constraints */
-@media (max-height: 750px) {
+@media (max-height: 800px) {
   .game-screen-container {
-    padding: 6px 10px max(6px, env(safe-area-inset-bottom)) 10px;
+    padding: 6px 10px max(12px, env(safe-area-inset-bottom)) 10px;
   }
   .game-header {
-    gap: 5px;
+    gap: 4px;
   }
   .header-level-title {
     font-size: 17px;
@@ -1001,7 +1002,7 @@
     gap: 4px;
   }
   .stat-card {
-    padding: 4px 2px;
+    padding: 3px 2px;
   }
   .stat-label {
     font-size: 7.5px;
@@ -1015,18 +1016,18 @@
   }
 }
 
-@media (max-height: 640px) {
+@media (max-height: 650px) {
   .game-header {
-    gap: 4px;
+    gap: 3px;
   }
   .header-level-title {
     font-size: 15px;
   }
   .lifelines-score-banner {
-    padding: 3px 8px;
+    padding: 2px 8px;
   }
   .control-btn {
-    padding: 6px 4px;
+    padding: 7px 4px;
     font-size: 11px;
   }
 }
