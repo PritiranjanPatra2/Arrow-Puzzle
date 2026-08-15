@@ -90,7 +90,7 @@ export function LevelCompleteModal({
               </div>
               <div className="points-row">
                 <span className="points-item-name">
-                  <Heart size={13} className="text-rose" /> {lifelinesRemaining}/5 Lifelines
+                  <Heart size={13} className="text-rose" /> {lifelinesRemaining}/7 Lifelines
                 </span>
                 <span className="points-item-val">+{pointsBreakdown.lifelineBonus}</span>
               </div>

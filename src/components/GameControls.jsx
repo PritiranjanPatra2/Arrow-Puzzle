@@ -3,6 +3,7 @@ import { RotateCcw, Lightbulb, RefreshCw } from 'lucide-react';
 
 export function GameControls({
   historyLength,
+  hintsRemaining = 7,
   onUndo,
   onHint,
   onRestart,
@@ -16,7 +17,7 @@ export function GameControls({
         disabled={disabled || historyLength === 0}
         title="Undo previous move"
       >
-        <RotateCcw size={20} />
+        <RotateCcw size={18} />
         <span>Undo</span>
         {historyLength > 0 && <span className="badge-pill">{historyLength}</span>}
       </button>
@@ -24,11 +25,12 @@ export function GameControls({
       <button
         className="control-btn highlight-gold"
         onClick={onHint}
-        disabled={disabled}
-        title="Highlight next movable arrow"
+        disabled={disabled || hintsRemaining <= 0}
+        title={`Highlight next movable arrow (${hintsRemaining} hints remaining)`}
       >
-        <Lightbulb size={20} />
+        <Lightbulb size={18} />
         <span>Hint</span>
+        <span className="badge-pill gold-badge">{hintsRemaining}</span>
       </button>
 
       <button
@@ -37,7 +39,7 @@ export function GameControls({
         disabled={disabled}
         title="Restart this level"
       >
-        <RefreshCw size={20} />
+        <RefreshCw size={18} />
         <span>Restart</span>
       </button>
     </div>

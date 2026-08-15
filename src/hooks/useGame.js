@@ -3,7 +3,8 @@ import { getLevelData } from '../game/predefinedLevels.js';
 import { checkArrowEscape, getBestHint, createCellMap } from '../game/puzzleValidator.js';
 import { sounds } from '../audio/soundEffects.js';
 
-export const MAX_LIFELINES = 5;
+export const MAX_LIFELINES = 7;
+export const MAX_HINTS = 7;
 
 export function useGame(initialLevel = 1, onLevelCompleted = null, onAllCompleted = null) {
   const [currentLevel, setCurrentLevel] = useState(initialLevel);
@@ -11,10 +12,13 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
   const [arrows, setArrows] = useState(() => getLevelData(initialLevel).arrows.map(a => ({ ...a })));
   const [initialArrowCount, setInitialArrowCount] = useState(() => getLevelData(initialLevel).arrows.length);
   
-  // Lifelines state (5 hearts)
+  // Lifelines state (7 hearts)
   const [lifelines, setLifelines] = useState(MAX_LIFELINES);
   const [lostHeartIndex, setLostHeartIndex] = useState(null);
   
+  // Hints state (7 hints per level)
+  const [hintsRemaining, setHintsRemaining] = useState(MAX_HINTS);
+
   // Animation and interaction states
   const [animatingArrowIds, setAnimatingArrowIds] = useState(new Set());
   const [blockedArrowId, setBlockedArrowId] = useState(null);
@@ -51,6 +55,7 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     escapingIdsRef.current.clear();
     setInitialArrowCount(data.arrows.length);
     setLifelines(MAX_LIFELINES);
+    setHintsRemaining(MAX_HINTS);
     setLostHeartIndex(null);
     setMoves(0);
     setHistory([]);
@@ -86,7 +91,7 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
       sounds.playEscape(1 + Math.min(1.2, (initialArrowCount - currentActiveArrows.length) * 0.05));
       
       // Save current state for Undo
-      setHistory(prev => [...prev, { arrows: arrowsRef.current.map(a => ({ ...a })), lifelines }]);
+      setHistory(prev => [...prev, { arrows: arrowsRef.current.map(a => ({ ...a })), lifelines, hintsRemaining }]);
       setMoves(m => m + 1);
 
       // Trigger visual GPU flight animation
@@ -144,7 +149,7 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
         setHighlightedBlockerIds([]);
       }, 450);
     }
-  }, [isLevelComplete, isGameOver, levelData.boardSize, initialArrowCount, lifelines, currentLevel, moves, hintInfo, onLevelCompleted, onAllCompleted]);
+  }, [isLevelComplete, isGameOver, levelData.boardSize, initialArrowCount, lifelines, hintsRemaining, currentLevel, moves, hintInfo, onLevelCompleted, onAllCompleted]);
 
   // Undo move
   const undo = useCallback(() => {
@@ -164,16 +169,20 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     setBlockedArrowId(null);
     setHighlightedBlockerIds([]);
     setLifelines(previousSnapshot.lifelines);
+    if (typeof previousSnapshot.hintsRemaining === 'number') {
+      setHintsRemaining(previousSnapshot.hintsRemaining);
+    }
   }, [history, isLevelComplete, isGameOver]);
 
-  // Request Hint
+  // Request Hint (7 hints per level)
   const requestHint = useCallback(() => {
-    if (isLevelComplete || isGameOver) return;
+    if (isLevelComplete || isGameOver || hintsRemaining <= 0) return;
 
     const currentActiveArrows = arrowsRef.current.filter(a => !escapingIdsRef.current.has(a.id));
     const best = getBestHint(currentActiveArrows, levelData.boardSize);
     if (!best || !best.arrow) return;
 
+    setHintsRemaining(prev => Math.max(0, prev - 1));
     sounds.playHint();
     setHintInfo(best);
 
@@ -181,7 +190,7 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     hintTimeoutRef.current = setTimeout(() => {
       setHintInfo(null);
     }, 4000);
-  }, [isLevelComplete, isGameOver, levelData.boardSize]);
+  }, [isLevelComplete, isGameOver, hintsRemaining, levelData.boardSize]);
 
   // Restart level
   const restart = useCallback(() => {
@@ -203,6 +212,9 @@ export function useGame(initialLevel = 1, onLevelCompleted = null, onAllComplete
     initialArrowCount,
     remainingCount: arrows.length,
     lifelines,
+    MAX_LIFELINES,
+    hintsRemaining,
+    MAX_HINTS,
     lostHeartIndex,
     moves,
     historyLength: history.length,

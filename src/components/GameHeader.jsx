@@ -9,7 +9,7 @@ export function GameHeader({
   remainingCount,
   moves,
   timeSeconds,
-  lifelines = 5,
+  lifelines = 7,
   lostHeartIndex = null,
   score = 0,
   bestStars = 0,
@@ -55,8 +55,8 @@ export function GameHeader({
 
       {/* Lifelines and Score Banner Row */}
       <div className="lifelines-score-banner">
-        {/* 5 Lifelines (Hearts) */}
-        <div className="lifelines-group" title={`${lifelines}/5 Lifelines remaining`}>
+        {/* 7 Lifelines (Hearts) */}
+        <div className="lifelines-group" title={`${lifelines}/${MAX_LIFELINES} Lifelines remaining`}>
           <span className="lifeline-label">LIFELINES</span>
           <div className="hearts-row">
             {Array.from({ length: MAX_LIFELINES }).map((_, idx) => {
@@ -70,7 +70,7 @@ export function GameHeader({
                     isBreaking ? 'heart-breaking' : ''
                   }`}
                 >
-                  <Heart size={18} fill={isAlive ? '#F43F5E' : 'transparent'} />
+                  <Heart size={16} fill={isAlive ? '#F43F5E' : 'transparent'} />
                 </div>
               );
             })}
@@ -101,19 +101,19 @@ export function GameHeader({
           </div>
         </div>
 
-        {/* Remaining Arrows */}
+        {/* Arrows Remaining */}
         <div className="stat-card">
           <span className="stat-label">REMAINING</span>
-          <span className="stat-value highlight-cyan">{remainingCount}</span>
+          <span className="stat-value stat-mono highlight-cyan">{remainingCount}</span>
         </div>
 
-        {/* Moves */}
+        {/* Moves Taken */}
         <div className="stat-card">
           <span className="stat-label">MOVES</span>
-          <span className="stat-value">{moves}</span>
+          <span className="stat-value stat-mono">{moves}</span>
         </div>
 
-        {/* Timer */}
+        {/* Level Timer */}
         <div className="stat-card">
           <span className="stat-label">TIME</span>
           <span className="stat-value stat-mono">{formatTime(timeSeconds)}</span>

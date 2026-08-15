@@ -34,6 +34,7 @@ export function GameScreen({
     initialArrowCount,
     remainingCount,
     lifelines,
+    hintsRemaining,
     lostHeartIndex,
     moves,
     historyLength,
@@ -150,6 +151,7 @@ export function GameScreen({
 
       <GameControls
         historyLength={historyLength}
+        hintsRemaining={hintsRemaining}
         onUndo={undo}
         onHint={requestHint}
         onRestart={handleRestart}
