@@ -1,21 +1,28 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Trophy } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 export function AchievementToast({ achievement, onDismiss }) {
+  const hasFired = useRef(false);
+
   useEffect(() => {
-    try {
-      confetti({
-        particleCount: 40,
-        spread: 60,
-        origin: { y: 0.15 },
-        colors: ['#F59E0B', '#38BDF8', '#818CF8']
-      });
-    } catch (e) {}
+    if (!hasFired.current) {
+      hasFired.current = true;
+      try {
+        confetti({
+          particleCount: 25,
+          spread: 50,
+          origin: { y: 0.2 },
+          ticks: 120,
+          disableForReducedMotion: true,
+          colors: ['#F59E0B', '#38BDF8', '#818CF8']
+        });
+      } catch (e) {}
+    }
 
     const timer = setTimeout(() => {
       onDismiss();
-    }, 4000);
+    }, 3500);
 
     return () => clearTimeout(timer);
   }, [onDismiss]);

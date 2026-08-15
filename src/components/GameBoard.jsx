@@ -5,72 +5,92 @@ export function GameBoard({
   boardSize,
   arrows,
   blockedArrowId,
-  highlightedBlockerIds,
+  highlightedBlockerIds = [],
   hintInfo,
+  animatingArrowIds,
   animatingArrow,
   onArrowClick
 }) {
-  // Generate background empty cell grid for clean board appearance
-  const gridCells = useMemo(() => {
-    const cells = [];
-    for (let r = 0; r < boardSize; r++) {
-      for (let c = 0; c < boardSize; c++) {
-        cells.push({ r, c, key: `bg-${r}-${c}` });
-      }
-    }
-    return cells;
-  }, [boardSize]);
+  const cellSize = 100 / boardSize;
 
-  // Fast lookup set for blocker IDs
-  const blockerSet = useMemo(() => new Set(highlightedBlockerIds), [highlightedBlockerIds]);
-
-  // Hint ray cells lookup
-  const hintRaySet = useMemo(() => {
-    if (!hintInfo || !hintInfo.rayCells) return new Set();
-    return new Set(hintInfo.rayCells.map(cell => `${cell.r},${cell.c}`));
-  }, [hintInfo]);
-
-  return (
-    <div className="game-board-wrapper">
-      <div
-        className="game-board"
-        style={{
-          '--grid-size': boardSize,
-          gridTemplateColumns: `repeat(${boardSize}, 1fr)`,
-          gridTemplateRows: `repeat(${boardSize}, 1fr)`
-        }}
-      >
-        {/* Background cell slots */}
-        {gridCells.map(cell => {
-          const isHintRay = hintRaySet.has(`${cell.r},${cell.c}`);
-          return (
-            <div
-              key={cell.key}
-              className={`board-cell ${isHintRay ? 'hint-ray-cell' : ''}`}
-              style={{
-                gridRow: cell.r + 1,
-                gridColumn: cell.c + 1
-              }}
-            >
-              <div className="cell-inner-dot" />
-            </div>
-          );
-        })}
-
-        {/* Active Arrows */}
-        {arrows.map(arrow => (
-          <ArrowTile
-            key={arrow.id}
-            arrow={arrow}
-            boardSize={boardSize}
-            isBlocked={arrow.id === blockedArrowId}
-            isHighlightedBlocker={blockerSet.has(arrow.id)}
-            isHinted={hintInfo && hintInfo.arrowId === arrow.id}
-            isAnimatingEscape={animatingArrow && animatingArrow.id === arrow.id}
-            onClick={onArrowClick}
-          />
+  // Memoize background grid cells so they NEVER re-render on user pointer clicks
+  const backgroundGrid = useMemo(() => {
+    const totalCells = boardSize * boardSize;
+    return (
+      <div className="game-board-grid">
+        {Array.from({ length: totalCells }).map((_, idx) => (
+          <div key={idx} className="grid-cell" />
         ))}
       </div>
+    );
+  }, [boardSize]);
+
+  // Fast blocker lookup set for O(1) checks
+  const blockerSet = useMemo(() => {
+    return new Set(highlightedBlockerIds);
+  }, [highlightedBlockerIds]);
+
+  return (
+    <div
+      className="game-board-wrapper"
+      style={{
+        '--grid-size': boardSize
+      }}
+    >
+      {/* Background static board grid cells (memoized) */}
+      {backgroundGrid}
+
+      {/* SVG Vector Layer for Winding Snake Arrows & Ray Indicators */}
+      <svg
+        className="game-board-svg-layer"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        <defs>
+          <radialGradient id="hintGlowGrad">
+            <stop offset="0%" stopColor="#F59E0B" stopOpacity="0.8" />
+            <stop offset="100%" stopColor="#F59E0B" stopOpacity="0" />
+          </radialGradient>
+        </defs>
+
+        {/* Hint Escape Ray Trajectory */}
+        {hintInfo && hintInfo.rayCells && (
+          <g className="hint-ray-layer">
+            {hintInfo.rayCells.map((rc, i) => (
+              <rect
+                key={i}
+                x={rc.c * cellSize + cellSize * 0.15}
+                y={rc.r * cellSize + cellSize * 0.15}
+                width={cellSize * 0.7}
+                height={cellSize * 0.7}
+                rx={cellSize * 0.2}
+                fill="rgba(245, 158, 11, 0.25)"
+                stroke="#F59E0B"
+                strokeWidth={cellSize * 0.04}
+                strokeDasharray={`${cellSize * 0.1}, ${cellSize * 0.08}`}
+                className="hint-ray-cell"
+              />
+            ))}
+          </g>
+        )}
+
+        {/* Winding Snake Arrow Paths */}
+        {arrows.map((arrow) => {
+          const isEscaping = animatingArrowIds ? animatingArrowIds.has(arrow.id) : (animatingArrow?.id === arrow.id);
+          return (
+            <ArrowTile
+              key={arrow.id}
+              arrow={arrow}
+              boardSize={boardSize}
+              isBlocked={blockedArrowId === arrow.id}
+              isHighlightedBlocker={blockerSet.has(arrow.id)}
+              isHinted={hintInfo?.arrow?.id === arrow.id}
+              isAnimatingEscape={Boolean(isEscaping)}
+              onClick={onArrowClick}
+            />
+          );
+        })}
+      </svg>
     </div>
   );
 }

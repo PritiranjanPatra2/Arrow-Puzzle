@@ -1,14 +1,17 @@
 import React, { useState } from 'react';
-import { X, Volume2, VolumeX, Sparkles, AlertTriangle, RefreshCw } from 'lucide-react';
+import { X, Volume2, VolumeX, Sparkles, AlertTriangle, RefreshCw, Unlock, Check } from 'lucide-react';
 import { sounds } from '../audio/soundEffects.js';
 
 export function SettingsModal({
   settings,
+  highestUnlockedLevel = 1,
   onUpdateSettings,
+  onUnlockAllLevels,
   onResetProgress,
   onClose
 }) {
   const [showConfirmReset, setShowConfirmReset] = useState(false);
+  const [unlockedNotice, setUnlockedNotice] = useState(false);
 
   const toggleSound = () => {
     const next = !settings.sound;
@@ -23,6 +26,13 @@ export function SettingsModal({
 
   const toggleHighContrast = () => {
     onUpdateSettings({ highContrast: !settings.highContrast });
+  };
+
+  const handleUnlockAll = () => {
+    onUnlockAllLevels();
+    setUnlockedNotice(true);
+    sounds.playClick();
+    setTimeout(() => setUnlockedNotice(false), 2500);
   };
 
   return (
@@ -99,6 +109,35 @@ export function SettingsModal({
             </button>
           </div>
 
+          {/* Testing / Developer Actions */}
+          <div className="setting-item">
+            <div className="setting-info">
+              <div className="setting-icon-box" style={{ background: 'rgba(56, 189, 248, 0.2)', color: 'var(--accent-cyan)' }}>
+                <Unlock size={20} />
+              </div>
+              <div>
+                <div className="setting-name">Testing Mode</div>
+                <div className="setting-desc">
+                  {highestUnlockedLevel >= 1000 ? 'All 1,000 Levels Unlocked' : `Unlocked up to Level ${highestUnlockedLevel}`}
+                </div>
+              </div>
+            </div>
+            <button
+              className={`secondary-btn ${unlockedNotice ? 'btn-success-active' : ''}`}
+              style={{ padding: '6px 12px', fontSize: '12px' }}
+              onClick={handleUnlockAll}
+            >
+              {unlockedNotice ? (
+                <>
+                  <Check size={14} />
+                  <span>All Unlocked!</span>
+                </>
+              ) : (
+                <span>Unlock All 1000</span>
+              )}
+            </button>
+          </div>
+
           {/* Reset Data Section */}
           <div className="reset-section">
             {!showConfirmReset ? (
@@ -107,13 +146,13 @@ export function SettingsModal({
                 onClick={() => setShowConfirmReset(true)}
               >
                 <RefreshCw size={16} />
-                <span>Reset All Progress</span>
+                <span>Restore / Reset to Level 1</span>
               </button>
             ) : (
               <div className="reset-confirm-box">
                 <div className="reset-confirm-warning">
                   <AlertTriangle size={18} className="text-amber" />
-                  <span>Are you sure you want to reset all 100 levels progress?</span>
+                  <span>Reset progress and lock levels back to Level 1?</span>
                 </div>
                 <div className="reset-btn-group">
                   <button
@@ -123,7 +162,7 @@ export function SettingsModal({
                       setShowConfirmReset(false);
                     }}
                   >
-                    Yes, Reset Everything
+                    Yes, Restore to Level 1
                   </button>
                   <button
                     className="secondary-btn"

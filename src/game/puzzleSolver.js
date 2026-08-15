@@ -1,22 +1,11 @@
-import { checkArrowEscape, getAvailableMoves } from './puzzleValidator.js';
+import { checkArrowEscape, getAvailableMoves, normalizeArrow } from './puzzleValidator.js';
 
 /**
- * Deterministic puzzle solver that solves by greedily removing unblocked arrows.
- * Also builds the full dependency graph and analyzes depth.
- * 
- * Returns:
- * {
- *   isSolvable: boolean,
- *   solutionOrder: Array<string> (arrow IDs),
- *   solutionLength: number,
- *   initialFreeMoves: number,
- *   maxChainDepth: number,
- *   averageChainDepth: number,
- *   deadlockCount: number
- * }
+ * Deterministic puzzle solver that solves by greedily removing unblocked multi-cell arrows.
+ * Runs in O(N^2) with zero recursion bottlenecks.
  */
 export function solvePuzzle(initialArrows, boardSize) {
-  let remaining = [...initialArrows];
+  let remaining = initialArrows.map(normalizeArrow);
   const solutionOrder = [];
   const initialAvailable = getAvailableMoves(remaining, boardSize);
   const initialFreeMoves = initialAvailable.length;
@@ -24,7 +13,7 @@ export function solvePuzzle(initialArrows, boardSize) {
   while (remaining.length > 0) {
     const available = getAvailableMoves(remaining, boardSize);
     if (available.length === 0) {
-      // Deadlock reached! The puzzle cannot be fully cleared from this state.
+      // Deadlock reached
       return {
         isSolvable: false,
         solutionOrder,
@@ -36,14 +25,12 @@ export function solvePuzzle(initialArrows, boardSize) {
       };
     }
 
-    // Pick the first available move (or the one that frees the most arrows)
     const nextMove = available[0];
     solutionOrder.push(nextMove.id);
     remaining = remaining.filter(a => a.id !== nextMove.id);
   }
 
-  // Calculate dependency depths from solution sequence
-  const { maxDepth, avgDepth } = calculateDependencyMetrics(initialArrows, boardSize);
+  const { maxDepth, avgDepth } = calculateDependencyMetricsFast(initialArrows, boardSize);
 
   return {
     isSolvable: true,
@@ -57,54 +44,60 @@ export function solvePuzzle(initialArrows, boardSize) {
 }
 
 /**
- * Computes direct blocking dependencies and longest chain path
+ * Ultra-fast O(V + E) DAG longest path calculation with zero exponential backtracking
  */
-export function calculateDependencyMetrics(arrows, boardSize) {
-  const arrowMap = new Map(arrows.map(a => [a.id, a]));
-  const adjacency = new Map(); // id -> array of ids blocked by this arrow
+function calculateDependencyMetricsFast(arrows, boardSize) {
+  const normalized = arrows.map(normalizeArrow);
+  const inDegree = new Map();
+  const adjacency = new Map();
 
-  for (const a of arrows) {
+  for (const a of normalized) {
+    inDegree.set(a.id, 0);
     adjacency.set(a.id, []);
   }
 
-  for (const a of arrows) {
-    const info = checkArrowEscape(a, arrows, boardSize);
+  for (const a of normalized) {
+    const info = checkArrowEscape(a, normalized, boardSize);
     for (const blocker of info.blockers) {
-      // 'blocker' blocks 'a'. Therefore 'blocker' must move before 'a'.
-      // Blocker -> a
       if (adjacency.has(blocker.id)) {
         adjacency.get(blocker.id).push(a.id);
+        inDegree.set(a.id, (inDegree.get(a.id) || 0) + 1);
       }
     }
   }
 
-  // Find longest path in DAG using memoized DFS
-  const memo = new Map();
+  // Topological longest path
+  const queue = [];
+  const depth = new Map();
 
-  function getDepth(id, visited = new Set()) {
-    if (memo.has(id)) return memo.get(id);
-    if (visited.has(id)) return 0; // Cycle guard
-    visited.add(id);
-
-    const neighbors = adjacency.get(id) || [];
-    let maxChildDepth = 0;
-    for (const childId of neighbors) {
-      maxChildDepth = Math.max(maxChildDepth, 1 + getDepth(childId, new Set(visited)));
+  for (const a of normalized) {
+    if (inDegree.get(a.id) === 0) {
+      queue.push(a.id);
+      depth.set(a.id, 1);
+    } else {
+      depth.set(a.id, 1);
     }
-
-    memo.set(id, maxChildDepth);
-    return maxChildDepth;
   }
 
-  let maxDepth = 0;
+  let maxDepth = 1;
   let totalDepth = 0;
-  for (const a of arrows) {
-    const d = getDepth(a.id);
-    maxDepth = Math.max(maxDepth, d);
-    totalDepth += d;
+
+  while (queue.length > 0) {
+    const u = queue.shift();
+    const currentD = depth.get(u) || 1;
+    maxDepth = Math.max(maxDepth, currentD);
+    totalDepth += currentD;
+
+    const neighbors = adjacency.get(u) || [];
+    for (const v of neighbors) {
+      depth.set(v, Math.max(depth.get(v) || 1, currentD + 1));
+      inDegree.set(v, inDegree.get(v) - 1);
+      if (inDegree.get(v) === 0) {
+        queue.push(v);
+      }
+    }
   }
 
-  const avgDepth = arrows.length > 0 ? Number((totalDepth / arrows.length).toFixed(2)) : 0;
-
+  const avgDepth = normalized.length > 0 ? Number((totalDepth / normalized.length).toFixed(2)) : 0;
   return { maxDepth, avgDepth };
 }

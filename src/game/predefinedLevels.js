@@ -1,73 +1,46 @@
 import { generateLevel } from './puzzleGenerator.js';
 import { solvePuzzle } from './puzzleSolver.js';
 import { getDifficulty } from './difficulty.js';
+import { normalizeArrow } from './puzzleValidator.js';
 
 /**
- * Handcrafted initial tutorial levels (Levels 1 to 5)
+ * Level 1 handcrafted introduction
  */
 const TUTORIAL_LEVELS = {
   1: {
     level: 1,
     boardSize: 5,
     arrows: [
-      { id: 'arrow-1-1', row: 1, col: 2, direction: 'UP' },
-      { id: 'arrow-1-2', row: 3, col: 1, direction: 'LEFT' },
-      { id: 'arrow-1-3', row: 2, col: 3, direction: 'RIGHT' }
-    ]
-  },
-  2: {
-    level: 2,
-    boardSize: 5,
-    arrows: [
-      { id: 'arrow-2-1', row: 2, col: 1, direction: 'RIGHT' },
-      { id: 'arrow-2-2', row: 2, col: 3, direction: 'DOWN' },
-      { id: 'arrow-2-3', row: 0, col: 1, direction: 'UP' },
-      { id: 'arrow-2-4', row: 4, col: 3, direction: 'RIGHT' }
-    ]
-  },
-  3: {
-    level: 3,
-    boardSize: 5,
-    arrows: [
-      { id: 'arrow-3-1', row: 2, col: 1, direction: 'RIGHT' },
-      { id: 'arrow-3-2', row: 2, col: 2, direction: 'RIGHT' },
-      { id: 'arrow-3-3', row: 2, col: 3, direction: 'RIGHT' },
-      { id: 'arrow-3-4', row: 1, col: 3, direction: 'UP' },
-      { id: 'arrow-3-5', row: 3, col: 1, direction: 'DOWN' }
-    ]
-  },
-  4: {
-    level: 4,
-    boardSize: 5,
-    arrows: [
-      { id: 'arrow-4-1', row: 1, col: 1, direction: 'RIGHT' },
-      { id: 'arrow-4-2', row: 1, col: 3, direction: 'DOWN' },
-      { id: 'arrow-4-3', row: 3, col: 3, direction: 'LEFT' },
-      { id: 'arrow-4-4', row: 3, col: 1, direction: 'DOWN' },
-      { id: 'arrow-4-5', row: 0, col: 2, direction: 'UP' },
-      { id: 'arrow-4-6', row: 4, col: 4, direction: 'RIGHT' }
-    ]
-  },
-  5: {
-    level: 5,
-    boardSize: 5,
-    arrows: [
-      { id: 'arrow-5-1', row: 2, col: 0, direction: 'RIGHT' },
-      { id: 'arrow-5-2', row: 2, col: 2, direction: 'UP' },
-      { id: 'arrow-5-3', row: 0, col: 2, direction: 'RIGHT' },
-      { id: 'arrow-5-4', row: 2, col: 4, direction: 'DOWN' },
-      { id: 'arrow-5-5', row: 4, col: 2, direction: 'LEFT' },
-      { id: 'arrow-5-6', row: 3, col: 2, direction: 'DOWN' },
-      { id: 'arrow-5-7', row: 1, col: 4, direction: 'UP' }
+      {
+        id: 'arrow-1-1',
+        direction: 'UP',
+        cells: [{ r: 1, c: 2 }, { r: 2, c: 2 }, { r: 2, c: 1 }],
+        color: '#38BDF8'
+      },
+      {
+        id: 'arrow-1-2',
+        direction: 'LEFT',
+        cells: [{ r: 3, c: 1 }, { r: 3, c: 2 }],
+        color: '#818CF8'
+      },
+      {
+        id: 'arrow-1-3',
+        direction: 'RIGHT',
+        cells: [{ r: 2, c: 4 }, { r: 3, c: 4 }],
+        color: '#F472B6'
+      },
+      {
+        id: 'arrow-1-4',
+        direction: 'DOWN',
+        cells: [{ r: 4, c: 0 }, { r: 3, c: 0 }],
+        color: '#34D399'
+      }
     ]
   }
 };
 
 const levelCache = new Map();
 
-/**
- * Gets level configuration for any level from 1 to 1000.
- */
 export function getLevelData(levelNumber) {
   const lvl = Math.max(1, Math.min(1000, Math.floor(levelNumber)));
 
@@ -80,11 +53,12 @@ export function getLevelData(levelNumber) {
   if (TUTORIAL_LEVELS[lvl]) {
     const tutorial = TUTORIAL_LEVELS[lvl];
     const difficulty = getDifficulty(lvl);
-    const metrics = solvePuzzle(tutorial.arrows, tutorial.boardSize);
+    const normalizedArrows = tutorial.arrows.map(normalizeArrow);
+    const metrics = solvePuzzle(normalizedArrows, tutorial.boardSize);
     levelData = {
       level: lvl,
       boardSize: tutorial.boardSize,
-      arrows: tutorial.arrows.map(a => ({ ...a })),
+      arrows: normalizedArrows,
       difficulty,
       metrics
     };

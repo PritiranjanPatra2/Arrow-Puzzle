@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { loadProgress, saveProgress, resetProgress } from './utils/storage.js';
 import { sounds } from './audio/soundEffects.js';
 import { checkNewAchievements } from './utils/achievements.js';
@@ -13,7 +13,7 @@ import './App.css';
 
 export function App() {
   const [progress, setProgress] = useState(loadProgress);
-  const [currentScreen, setCurrentScreen] = useState('HOME'); // 'HOME' | 'LEVEL_SELECT' | 'PLAYING'
+  const [currentScreen, setCurrentScreen] = useState('HOME');
   const [activeLevel, setActiveLevel] = useState(1);
   const [showInstructions, setShowInstructions] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -30,9 +30,10 @@ export function App() {
     saveProgress(progress);
   }, [progress]);
 
-  // Save level completion stats and check achievements
-  const handleLevelCompleted = (level, stars, moves, timeSeconds, lifelinesRemaining, pointsEarned) => {
+  // Memoized level completion handler to prevent render loops
+  const handleLevelCompleted = useCallback((level, stars, moves, timeSeconds, lifelinesRemaining, pointsEarned) => {
     setProgress(prev => {
+      // Guard: if already completed this level with higher or equal stars and score accounted for
       const nextUnlocked = Math.min(1000, Math.max(prev.highestUnlockedLevel, level + 1));
       const completedSet = new Set(prev.completedLevels);
       completedSet.add(level);
@@ -75,27 +76,25 @@ export function App() {
           ...(prev.unlockedAchievements || []),
           ...unlockedIds
         ];
-        // Add achievement reward points
         const bonusPoints = newlyUnlocked.reduce((sum, a) => sum + (a.rewardPoints || 0), 0);
         updatedProgress.score += bonusPoints;
 
-        // Trigger fanfare & toast for the first newly unlocked
         sounds.playAchievement();
         setActiveToast(newlyUnlocked[0]);
       }
 
       return updatedProgress;
     });
-  };
+  }, []);
 
-  const handleResetData = () => {
+  const handleResetData = useCallback(() => {
     const fresh = resetProgress();
     setProgress(fresh);
     setActiveLevel(1);
     setCurrentScreen('HOME');
-  };
+  }, []);
 
-  const handleUpdateSettings = (newSettings) => {
+  const handleUpdateSettings = useCallback((newSettings) => {
     setProgress(prev => ({
       ...prev,
       settings: {
@@ -103,7 +102,7 @@ export function App() {
         ...newSettings
       }
     }));
-  };
+  }, []);
 
   const totalStars = Object.values(progress.stars).reduce((acc, val) => acc + (val || 0), 0);
 
@@ -179,7 +178,14 @@ export function App() {
       {showSettings && (
         <SettingsModal
           settings={progress.settings}
+          highestUnlockedLevel={progress.highestUnlockedLevel}
           onUpdateSettings={handleUpdateSettings}
+          onUnlockAllLevels={() => {
+            setProgress(prev => ({
+              ...prev,
+              highestUnlockedLevel: 1000
+            }));
+          }}
           onResetProgress={handleResetData}
           onClose={() => setShowSettings(false)}
         />

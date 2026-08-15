@@ -1,5 +1,5 @@
 /**
- * Ray tracing, collision detection, and blocker analysis for Arrow Puzzle
+ * Winding Snake Arrow Ray Tracing, Collision Detection, and Validation
  */
 
 export const DIRECTIONS = {
@@ -10,40 +10,91 @@ export const DIRECTIONS = {
 };
 
 /**
- * Returns a grid map of occupied cell coordinates to arrow objects
+ * Normalizes an arrow to a winding snake arrow structure:
+ * {
+ *   id: string,
+ *   direction: 'UP' | 'RIGHT' | 'DOWN' | 'LEFT', // Head pointing direction
+ *   cells: Array<{ r: number, c: number }>,       // [Head, body_1, body_2, ..., Tail]
+ *   head: { r: number, c: number },
+ *   tail: { r: number, c: number },
+ *   length: number,
+ *   colorIndex: number
+ * }
+ */
+export function normalizeArrow(arrow) {
+  let cells = [];
+
+  if (arrow.cells && arrow.cells.length > 0) {
+    cells = arrow.cells.map(pt => ({
+      r: typeof pt.r === 'number' ? pt.r : pt.row,
+      c: typeof pt.c === 'number' ? pt.c : pt.col
+    }));
+  } else {
+    const r = typeof arrow.r === 'number' ? arrow.r : (typeof arrow.row === 'number' ? arrow.row : 0);
+    const c = typeof arrow.c === 'number' ? arrow.c : (typeof arrow.col === 'number' ? arrow.col : 0);
+    cells = [{ r, c }];
+  }
+
+  const head = cells[0];
+  const tail = cells[cells.length - 1];
+
+  return {
+    ...arrow,
+    cells,
+    head,
+    tail,
+    length: cells.length,
+    r: head.r,
+    c: head.c,
+    row: head.r,
+    col: head.c
+  };
+}
+
+/**
+ * Returns a grid map of occupied cell coordinates "r,c" -> arrow object
  */
 export function createCellMap(arrows) {
   const map = new Map();
   for (let i = 0; i < arrows.length; i++) {
-    const a = arrows[i];
-    map.set(`${a.row},${a.col}`, a);
+    const a = normalizeArrow(arrows[i]);
+    for (const pt of a.cells) {
+      map.set(`${pt.r},${pt.c}`, a);
+    }
   }
   return map;
 }
 
 /**
- * Check if a specific arrow can escape given the active arrows and board size
- * Returns { canEscape: boolean, blockers: Array<Arrow>, rayCells: Array<{r, c}> }
+ * Check if a winding snake arrow can escape.
+ * Ray starts from head moving in the head's direction to the edge of the board.
+ * If ANY other arrow occupies a cell along this ray, the escape is blocked!
  */
-export function checkArrowEscape(arrow, arrows, boardSize, cellMap = null) {
+export function checkArrowEscape(rawArrow, arrows, boardSize, cellMap = null) {
   if (!cellMap) {
     cellMap = createCellMap(arrows);
   }
 
+  const arrow = normalizeArrow(rawArrow);
   const dir = DIRECTIONS[arrow.direction];
   if (!dir) return { canEscape: false, blockers: [], rayCells: [] };
 
   const blockers = [];
+  const blockerSet = new Set();
   const rayCells = [];
 
-  let r = arrow.row + dir.dr;
-  let c = arrow.col + dir.dc;
+  let r = arrow.head.r + dir.dr;
+  let c = arrow.head.c + dir.dc;
 
   while (r >= 0 && r < boardSize && c >= 0 && c < boardSize) {
     rayCells.push({ r, c });
     const key = `${r},${c}`;
     if (cellMap.has(key)) {
-      blockers.push(cellMap.get(key));
+      const blocker = cellMap.get(key);
+      if (blocker.id !== arrow.id && !blockerSet.has(blocker.id)) {
+        blockerSet.add(blocker.id);
+        blockers.push(blocker);
+      }
     }
     r += dir.dr;
     c += dir.dc;
@@ -82,7 +133,6 @@ export function getBestHint(arrows, boardSize) {
   const available = getAvailableMoves(arrows, boardSize);
   if (available.length === 0) return null;
 
-  // Score available moves by how many arrows they unblock
   let best = available[0];
   let maxUnblocked = -1;
 

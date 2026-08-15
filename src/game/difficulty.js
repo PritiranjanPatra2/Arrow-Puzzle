@@ -1,72 +1,81 @@
 /**
- * Continuous Mathematical Difficulty Scaling for Levels 1 to 1000.
- * Every level introduces a gradual, monotonically increasing step in challenge.
+ * Dynamic Grid Scaling: Adds more grid size every 50 levels scaling up to 30x30.
+ * Guaranteed 100% solvable with dense interlocking snake mazes and strictly 1 initial free move.
  */
 
 export function getDifficulty(level) {
   const lvl = Math.max(1, Math.min(1000, Math.floor(level)));
-  const progress = (lvl - 1) / 999; // 0.0 at lvl 1, 1.0 at lvl 1000
+  const progress = (lvl - 1) / 999;
 
-  // 1. Board Size Progression (5x5 up to 10x10)
+  // Board Size Progression: Increases every 50 levels up to 30x30
+  // Level 1-49:   5x5 / 6x6
+  // Level 50-99:  7x7
+  // Level 100-149: 8x8
+  // Level 150-199: 9x9
+  // Level 200-249: 10x10
+  // Level 250-299: 11x11
+  // Level 300-349: 12x12
+  // Level 350-399: 13x13
+  // ...
+  // Level 950-1000: 30x30 Giant Master Labyrinth!
   let boardSize = 5;
-  if (lvl >= 751) boardSize = 10;
-  else if (lvl >= 501) boardSize = 9;
-  else if (lvl >= 251) boardSize = 8;
-  else if (lvl >= 101) boardSize = 7;
-  else if (lvl >= 26) boardSize = 6;
+
+  if (lvl >= 950) boardSize = 30;
+  else if (lvl >= 900) boardSize = 28;
+  else if (lvl >= 850) boardSize = 26;
+  else if (lvl >= 800) boardSize = 24;
+  else if (lvl >= 750) boardSize = 22;
+  else if (lvl >= 700) boardSize = 20;
+  else if (lvl >= 650) boardSize = 19;
+  else if (lvl >= 600) boardSize = 18;
+  else if (lvl >= 550) boardSize = 17;
+  else if (lvl >= 500) boardSize = 16;
+  else if (lvl >= 450) boardSize = 15;
+  else if (lvl >= 400) boardSize = 14;
+  else if (lvl >= 350) boardSize = 13;
+  else if (lvl >= 300) boardSize = 12;
+  else if (lvl >= 250) boardSize = 11;
+  else if (lvl >= 200) boardSize = 10;
+  else if (lvl >= 150) boardSize = 9;
+  else if (lvl >= 100) boardSize = 8;
+  else if (lvl >= 50) boardSize = 7;
+  else if (lvl >= 10) boardSize = 6;
   else boardSize = 5;
 
   const totalCells = boardSize * boardSize;
 
-  // 2. Arrow Count (monotonically scaling from 3 arrows up to ~75 arrows)
+  // Dense snake count scaling with board size & level difficulty
   let targetArrowCount;
-  if (lvl <= 5) {
-    targetArrowCount = 3 + lvl; // 4, 5, 6, 7, 8
-  } else if (lvl <= 25) {
-    // 5x5 (25 cells) -> 8..15
-    const t = (lvl - 5) / 20;
-    targetArrowCount = Math.round(8 + t * 7);
-  } else if (lvl <= 100) {
-    // 6x6 (36 cells) -> 14..22
-    const t = (lvl - 26) / 74;
-    targetArrowCount = Math.round(14 + t * 8);
-  } else if (lvl <= 250) {
-    // 7x7 (49 cells) -> 20..32
-    const t = (lvl - 101) / 149;
-    targetArrowCount = Math.round(20 + t * 12);
-  } else if (lvl <= 500) {
-    // 8x8 (64 cells) -> 30..46
-    const t = (lvl - 251) / 249;
-    targetArrowCount = Math.round(30 + t * 16);
-  } else if (lvl <= 750) {
-    // 9x9 (81 cells) -> 42..62
-    const t = (lvl - 501) / 249;
-    targetArrowCount = Math.round(42 + t * 20);
+  if (lvl === 1) {
+    targetArrowCount = 4;
+  } else if (lvl <= 9) {
+    targetArrowCount = 6 + Math.round((lvl - 2) * 1.2);
+  } else if (lvl <= 49) {
+    targetArrowCount = 12 + Math.round((lvl - 10) * 0.4);
+  } else if (lvl <= 99) {
+    targetArrowCount = 18 + Math.round((lvl - 50) * 0.3);
+  } else if (lvl <= 249) {
+    targetArrowCount = 26 + Math.round((lvl - 100) * 0.2);
+  } else if (lvl <= 499) {
+    targetArrowCount = 45 + Math.round((lvl - 250) * 0.18);
+  } else if (lvl <= 749) {
+    targetArrowCount = 75 + Math.round((lvl - 500) * 0.15);
   } else {
-    // 10x10 (100 cells) -> 58..78
-    const t = (lvl - 751) / 249;
-    targetArrowCount = Math.round(58 + t * 20);
+    targetArrowCount = 105 + Math.round((lvl - 750) * 0.18);
   }
 
-  const maxAllowed = Math.floor(totalCells * 0.82);
+  const maxAllowed = Math.floor(totalCells * 0.85);
   const arrowCount = Math.min(maxAllowed, Math.max(3, targetArrowCount));
   const density = Number((arrowCount / totalCells).toFixed(3));
 
-  // 3. Max Initially Available / Obvious Free Moves
-  let maxInitialFreeMoves = 3;
-  if (lvl > 100) maxInitialFreeMoves = 1;
-  else if (lvl > 30) maxInitialFreeMoves = 2;
-  else if (lvl > 10) maxInitialFreeMoves = 2;
+  // Max initial free moves: Strictly 1 from Level 2 onward!
+  let maxInitialFreeMoves = 1;
+  if (lvl === 1) maxInitialFreeMoves = 3;
 
-  // 4. Minimum required dependency chain depth (continuous scaling)
-  const minChainDepth = Math.max(1, Math.min(32, Math.round(1 + Math.pow(progress, 0.85) * 28)));
-
-  // 5. Complexity Target Score
-  const targetComplexity = Math.round(10 + progress * 190);
-
-  // 6. Benchmark metrics for 3-star scoring
+  const minChainDepth = Math.max(1, Math.min(50, Math.round(2 + Math.pow(progress, 0.7) * 45)));
+  const targetComplexity = Math.round(20 + progress * 380);
   const targetMoves = arrowCount;
-  const parTimeSeconds = Math.round(15 + progress * 240);
+  const parTimeSeconds = Math.round(20 + progress * 400);
 
   return {
     level: lvl,

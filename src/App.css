@@ -757,12 +757,16 @@
 /* =========================================
    GAME BOARD & ARROW TILES
 ========================================= */
+/* =========================================
+   GAME BOARD & WINDING SNAKE ARROW TILES
+========================================= */
 .game-screen-main {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 6px 0;
+  padding: 8px 0;
+  width: 100%;
 }
 
 .game-board-wrapper {
@@ -774,130 +778,145 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  background: rgba(15, 23, 42, 0.9);
+  backdrop-filter: blur(16px);
+  border: 2px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 10px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 0 24px rgba(0, 0, 0, 0.5);
+  overflow: visible;
 }
 
-.game-board {
+.game-board-grid {
   width: 100%;
   height: 100%;
   display: grid;
-  gap: 5px;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(16px);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  padding: 8px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 0, 0, 0.4);
-  position: relative;
+  grid-template-columns: repeat(var(--grid-size, 5), 1fr);
+  grid-template-rows: repeat(var(--grid-size, 5), 1fr);
+  gap: 3px;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
-.board-cell {
+.grid-cell {
   background: rgba(30, 41, 59, 0.35);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.03);
   position: relative;
 }
 
-.cell-inner-dot {
-  width: 3px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.board-cell.hint-ray-cell {
-  background: rgba(245, 158, 11, 0.25);
-  box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.4);
-}
-
-.arrow-tile-container {
-  position: relative;
-  z-index: 10;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-}
-
-.arrow-tile {
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(145deg, #1E293B, #0F172A);
-  border: 1.5px solid rgba(56, 189, 248, 0.4);
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
-  transition: transform 0.15s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.arrow-tile:hover {
-  transform: scale(1.05);
-  border-color: var(--accent-cyan);
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
-}
-
-.arrow-svg {
-  width: 70%;
-  height: 70%;
-  pointer-events: none;
-}
-
-.blocker-warning-badge {
+.game-board-svg-layer {
   position: absolute;
-  top: -4px;
-  right: -4px;
-  width: 16px;
-  height: 16px;
-  background: var(--accent-rose);
-  color: #FFF;
-  border-radius: 50%;
-  font-size: 10px;
-  font-weight: 900;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  inset: 10px;
+  width: calc(100% - 20px);
+  height: calc(100% - 20px);
+  overflow: visible;
+  pointer-events: auto;
 }
 
-.arrow-tile.shake-blocked {
-  animation: shakeBlocked 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
-  border-color: var(--accent-rose) !important;
-  box-shadow: 0 0 18px rgba(244, 63, 94, 0.7) !important;
+/* Winding Snake Arrow Styles */
+.snake-arrow-group {
+  transition: transform 0.15s ease, filter 0.2s ease;
+  touch-action: manipulation;
 }
 
-@keyframes shakeBlocked {
-  10%, 90% { transform: translate3d(-2px, 0, 0) rotate(-2deg); }
-  20%, 80% { transform: translate3d(3px, 0, 0) rotate(2deg); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-3deg); }
-  40%, 60% { transform: translate3d(4px, 0, 0) rotate(3deg); }
+.snake-arrow-group:hover {
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
 }
 
-.arrow-tile.highlight-blocker {
-  border-color: var(--accent-rose) !important;
-  box-shadow: 0 0 20px rgba(244, 63, 94, 0.8), inset 0 0 10px rgba(244, 63, 94, 0.4);
+.snake-body-path {
+  transition: stroke 0.2s ease, filter 0.2s ease;
 }
 
-.arrow-tile.pulse-hint {
-  border-color: var(--accent-amber) !important;
-  box-shadow: 0 0 25px rgba(245, 158, 11, 0.9);
-  animation: pulseHint 0.8s ease-in-out infinite alternate;
+.snake-head-polygon {
+  transition: fill 0.2s ease, stroke 0.2s ease;
 }
 
-@keyframes pulseHint {
+/* Blocked / Error Shake */
+.snake-arrow-group.snake-blocked {
+  animation: snakeBlockedShake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+  filter: drop-shadow(0 0 10px rgba(244, 63, 94, 0.9)) !important;
+}
+
+@keyframes snakeBlockedShake {
+  10%, 90% { transform: translate3d(-3px, 0, 0) rotate(-1deg); }
+  20%, 80% { transform: translate3d(3px, 0, 0) rotate(1deg); }
+  30%, 50%, 70% { transform: translate3d(-4px, 0, 0) rotate(-2deg); }
+  40%, 60% { transform: translate3d(4px, 0, 0) rotate(2deg); }
+}
+
+/* Blocker Warning */
+.snake-arrow-group.snake-blocker-warning {
+  filter: drop-shadow(0 0 12px rgba(245, 158, 11, 0.95)) !important;
+  animation: blockerWarningPulse 0.8s ease-in-out infinite alternate;
+}
+
+@keyframes blockerWarningPulse {
   0% { transform: scale(1); }
-  100% { transform: scale(1.1); }
+  100% { transform: scale(1.02); }
 }
 
-/* Flight Escape Animations */
-.animate-escape-up { animation: escapeFlightUp 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards; z-index: 50; }
-.animate-escape-down { animation: escapeFlightDown 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards; z-index: 50; }
-.animate-escape-left { animation: escapeFlightLeft 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards; z-index: 50; }
-.animate-escape-right { animation: escapeFlightRight 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards; z-index: 50; }
+/* Hint Pulse */
+.snake-arrow-group.snake-hinted {
+  filter: drop-shadow(0 0 16px rgba(245, 158, 11, 1)) !important;
+  animation: snakeHintPulse 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes snakeHintPulse {
+  0% { transform: scale(1); }
+  100% { transform: scale(1.03); }
+}
+
+/* Hint Ray Cells */
+.hint-ray-cell {
+  animation: hintRayPulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes hintRayPulse {
+  0% { opacity: 0.4; }
+  100% { opacity: 0.9; }
+}
+
+/* Escape Flight Animations for Winding Snake */
+.snake-escape-up {
+  animation: snakeEscapeUp 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.snake-escape-down {
+  animation: snakeEscapeDown 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.snake-escape-left {
+  animation: snakeEscapeLeft 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+.snake-escape-right {
+  animation: snakeEscapeRight 0.28s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  will-change: transform, opacity;
+}
+
+@keyframes snakeEscapeUp {
+  0% { transform: translate3d(0, 0, 0); opacity: 1; }
+  100% { transform: translate3d(0, -140px, 0); opacity: 0; }
+}
+
+@keyframes snakeEscapeDown {
+  0% { transform: translate3d(0, 0, 0); opacity: 1; }
+  100% { transform: translate3d(0, 140px, 0); opacity: 0; }
+}
+
+@keyframes snakeEscapeLeft {
+  0% { transform: translate3d(0, 0, 0); opacity: 1; }
+  100% { transform: translate3d(-140px, 0, 0); opacity: 0; }
+}
+
+@keyframes snakeEscapeRight {
+  0% { transform: translate3d(0, 0, 0); opacity: 1; }
+  100% { transform: translate3d(140px, 0, 0); opacity: 0; }
+}
 
 @keyframes escapeFlightUp { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(-400%) scale(0.6); opacity: 0; } }
 @keyframes escapeFlightDown { 0% { transform: translateY(0) scale(1); opacity: 1; } 100% { transform: translateY(400%) scale(0.6); opacity: 0; } }

@@ -4,29 +4,38 @@ import { Trophy, Star, Grid, RefreshCw } from 'lucide-react';
 
 export function AllCompleteModal({ onLevelSelect, onReplayLevel1000 }) {
   useEffect(() => {
-    // Grand fireworks celebration bursts
-    const duration = 4 * 1000;
-    const end = Date.now() + duration;
+    // 3 spaced celebration bursts
+    const timers = [
+      setTimeout(() => {
+        try {
+          confetti({
+            particleCount: 50,
+            spread: 100,
+            origin: { y: 0.5, x: 0.3 },
+            disableForReducedMotion: true,
+            colors: ['#38BDF8', '#818CF8', '#F59E0B']
+          });
+        } catch (e) {}
+      }, 100),
+      setTimeout(() => {
+        try {
+          confetti({
+            particleCount: 50,
+            spread: 100,
+            origin: { y: 0.5, x: 0.7 },
+            disableForReducedMotion: true,
+            colors: ['#10B981', '#EC4899', '#E0E7FF']
+          });
+        } catch (e) {}
+      }, 400)
+    ];
 
-    const interval = setInterval(() => {
-      if (Date.now() > end) {
-        return clearInterval(interval);
-      }
+    return () => {
+      timers.forEach(t => clearTimeout(t));
       try {
-        confetti({
-          startVelocity: 35,
-          spread: 360,
-          ticks: 70,
-          origin: {
-            x: Math.random(),
-            y: Math.random() - 0.2
-          },
-          colors: ['#38BDF8', '#818CF8', '#F59E0B', '#10B981', '#EC4899', '#E0E7FF']
-        });
+        confetti.reset();
       } catch (e) {}
-    }, 220);
-
-    return () => clearInterval(interval);
+    };
   }, []);
 
   return (

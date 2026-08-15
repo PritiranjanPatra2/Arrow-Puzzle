@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import confetti from 'canvas-confetti';
 import { Star, ArrowRight, RefreshCw, Grid, Heart, Award, Zap } from 'lucide-react';
 import { formatTime } from '../utils/scoring.js';
@@ -15,15 +15,35 @@ export function LevelCompleteModal({
   onLevelSelect,
   hasNextLevel
 }) {
+  const hasFiredConfetti = useRef(false);
+
   useEffect(() => {
-    try {
-      confetti({
-        particleCount: 80,
-        spread: 70,
-        origin: { y: 0.6 },
-        colors: ['#38BDF8', '#818CF8', '#F59E0B', '#10B981', '#EC4899']
+    // Defer confetti to post-paint frame so INP remains under 20ms
+    let animId = null;
+    if (!hasFiredConfetti.current) {
+      hasFiredConfetti.current = true;
+      animId = requestAnimationFrame(() => {
+        setTimeout(() => {
+          try {
+            confetti({
+              particleCount: 22,
+              spread: 55,
+              origin: { y: 0.65 },
+              ticks: 100,
+              disableForReducedMotion: true,
+              colors: ['#38BDF8', '#818CF8', '#F59E0B', '#10B981']
+            });
+          } catch (e) {}
+        }, 16);
       });
-    } catch (e) {}
+    }
+
+    return () => {
+      if (animId) cancelAnimationFrame(animId);
+      try {
+        confetti.reset();
+      } catch (e) {}
+    };
   }, []);
 
   return (

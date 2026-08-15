@@ -30,12 +30,16 @@
   padding: 0;
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
 }
 
 html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  position: fixed;
+  overscroll-behavior: none;
   background-color: var(--bg-main);
   color: var(--text-primary);
   font-family: var(--font-main);
@@ -47,6 +51,7 @@ html, body {
   display: flex;
   justify-content: center;
   align-items: center;
+  overscroll-behavior: none;
 }
 
 button {
@@ -55,4 +60,5 @@ button {
   background: none;
   cursor: pointer;
   outline: none;
+  touch-action: manipulation;
 }

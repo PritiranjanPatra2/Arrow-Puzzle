@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useGame } from '../hooks/useGame.js';
 import { useTimer } from '../hooks/useTimer.js';
 import { calculateStars, calculateLevelPoints } from '../utils/scoring.js';
@@ -22,6 +22,9 @@ export function GameScreen({
   const [isPaused, setIsPaused] = useState(false);
   const [earnedStars, setEarnedStars] = useState(3);
   const [pointsBreakdown, setPointsBreakdown] = useState(null);
+  
+  // Guard to ensure level completion logic only runs once per level
+  const hasSavedRef = useRef(false);
 
   const {
     currentLevel,
@@ -34,7 +37,7 @@ export function GameScreen({
     lostHeartIndex,
     moves,
     historyLength,
-    animatingArrow,
+    animatingArrowIds,
     blockedArrowId,
     highlightedBlockerIds,
     hintInfo,
@@ -50,32 +53,40 @@ export function GameScreen({
 
   // Load level on prop change
   useEffect(() => {
+    hasSavedRef.current = false;
     loadLevel(level);
     timer.reset();
   }, [level, loadLevel]);
 
-  // When level completes, pause timer, calculate stars & points breakdown
+  // When level completes, pause timer, calculate stars & points breakdown ONCE
+  const parTime = levelData?.difficulty?.parTimeSeconds || 60;
+
   useEffect(() => {
-    if (isLevelComplete) {
+    if (isLevelComplete && !hasSavedRef.current) {
+      hasSavedRef.current = true;
       timer.stop();
+      
       const stars = calculateStars(
         moves,
         initialArrowCount,
         timer.seconds,
-        levelData.difficulty.parTimeSeconds
+        parTime
       );
       const points = calculateLevelPoints(
         currentLevel,
         stars,
         lifelines,
         timer.seconds,
-        levelData.difficulty.parTimeSeconds
+        parTime
       );
       setEarnedStars(stars);
       setPointsBreakdown(points);
-      onCompleteLevelSave(currentLevel, stars, moves, timer.seconds, lifelines, points.totalPoints);
+      
+      if (onCompleteLevelSave) {
+        onCompleteLevelSave(currentLevel, stars, moves, timer.seconds, lifelines, points.totalPoints);
+      }
     }
-  }, [isLevelComplete, moves, initialArrowCount, lifelines, timer.seconds, levelData.difficulty.parTimeSeconds, currentLevel, onCompleteLevelSave]);
+  }, [isLevelComplete, moves, initialArrowCount, lifelines, timer.seconds, parTime, currentLevel, onCompleteLevelSave]);
 
   // Stop timer on game over
   useEffect(() => {
@@ -95,6 +106,7 @@ export function GameScreen({
   };
 
   const handleRestart = () => {
+    hasSavedRef.current = false;
     setIsPaused(false);
     restart();
     timer.reset();
@@ -102,6 +114,7 @@ export function GameScreen({
 
   const handleNextLevel = () => {
     if (currentLevel < 1000) {
+      hasSavedRef.current = false;
       loadLevel(currentLevel + 1);
       timer.reset();
     }
@@ -130,7 +143,7 @@ export function GameScreen({
           blockedArrowId={blockedArrowId}
           highlightedBlockerIds={highlightedBlockerIds}
           hintInfo={hintInfo}
-          animatingArrow={animatingArrow}
+          animatingArrowIds={animatingArrowIds}
           onArrowClick={handleArrowClick}
         />
       </main>
